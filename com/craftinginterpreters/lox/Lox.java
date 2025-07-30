@@ -38,9 +38,20 @@ public class Lox {
             System.out.print(">");
             String line = reader.readLine();
             if (line == null) break;
-            run(line);
+            replRun(line);
             hadError = false;
         }
+    }
+
+    private static void replRun(String source) {
+        Scanner scanner = new Scanner(source);
+        List<Token> tokens = scanner.scanTokens();
+        Parser parser = new Parser(tokens);
+        List<Stmt> statements = parser.parse();
+
+        if(hadError) return;
+
+        interpreter.replInterpret(statements);
     }
 
     private static void run(String source) {
