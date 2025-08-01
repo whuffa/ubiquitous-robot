@@ -27,17 +27,26 @@ public class Parser {
     private Expr expression() {
         Expr expr = assignment();
         while(match(COMMA)) {
+            //System.out.println("Don't do that dumbass!!");
             Token operator = previous();
-            Expr right = equality();
+            Expr right = assignment();
             expr = new Expr.Binary(expr, operator, right);
-
         }
         return expr;
     }
 
     private Stmt declaration() {
         try {
-            if (match(FUN)) return function("function");
+            if (match(FUN)) {
+                if (check(IDENTIFIER)) {
+                    return function("function");
+                }
+                else {
+                    Stmt.Expression stmt = new Stmt.Expression(anonFunction());
+                    consume(SEMICOLON, "Expect ';' after expression.");
+                    return stmt;
+                }
+            }
             if (match(VAR)) return varDeclaration();
             return statement();
         } catch (ParseError error) {
@@ -171,22 +180,9 @@ public class Parser {
 
     private Stmt.Function function(String kind) {
         Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
-        consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
-        List<Token> parameters = new ArrayList<>();
-        if(!check(RIGHT_PAREN)) {
-            do {
-                if (parameters.size() >= 255) {
-                    error(peek(), "Can't have more than 255 parameters.");
-                }
-                parameters.add(
-                    consume(IDENTIFIER, "Expect parameter name."));
-            } while (match(COMMA));
-            
-        }
-        consume(RIGHT_PAREN, "Expect')' after parameters.");
-        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
-        List<Stmt> body = block();
-        return new Stmt.Function(name, parameters, body);
+        //Expr.Function func = (Expr.Function)anonFunction();
+
+        return new Stmt.Function(name, anonFunction());
     }
 
     private List<Stmt> block() {
@@ -216,6 +212,28 @@ public class Parser {
         }
 
         return expr;
+    }
+
+    private Expr anonFunction() {
+        String kind = "function";
+        Token start = previous();
+        System.out.println(start.lexeme);
+        consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
+        List<Token> parameters = new ArrayList<>();
+        if(!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+                parameters.add(
+                    consume(IDENTIFIER, "Expext parameter name."));
+            } while (match(COMMA));
+        }
+        consume(RIGHT_PAREN, "Expect')' after parameters.");
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = block();
+        return new Expr.Function(start, parameters, body);
+        
     }
 
     private Expr or() {
@@ -306,7 +324,7 @@ public class Parser {
                 if (arguments.size() >= 255) {
                     error(peek(), "Can't have more than 255 arguments.");
                 }
-                arguments.add(expression());
+                arguments.add(assignment());
             } while (match(COMMA));
         }
 
@@ -322,6 +340,7 @@ public class Parser {
         
         while (true) { 
             if (match(LEFT_PAREN)) {
+                //System.out.println("Looking for arguments!");
                 expr = finishCall(expr);
             } else {
                 break;
@@ -332,6 +351,7 @@ public class Parser {
     }
 
     private Expr primary() {
+        if (match(FUN)) return anonFunction();
         if (match(FALSE)) return new Expr.Literal(false);
         if (match(TRUE)) return new Expr.Literal(true);
         if (match(NIL)) return new Expr.Literal(null);

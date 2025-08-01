@@ -7,7 +7,6 @@ public class Interpreter implements Expr.Visitor<Object>,
                                     Stmt.Visitor<Void> {
     final Environment globals = new Environment();
     private Environment environment = globals;
-    private boolean broken = false;
 
     Interpreter() {
         globals.define("clock", new LoxCallable() {
@@ -54,6 +53,11 @@ public class Interpreter implements Expr.Visitor<Object>,
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
+    }
+
+    @Override
+    public Object visitFunctionExpr(Expr.Function expr) {
+        return new LoxFunction(expr, environment);
     }
 
     @Override
@@ -152,7 +156,7 @@ public class Interpreter implements Expr.Visitor<Object>,
     }
 
     private void execute(Stmt stmt) {
-        if (!broken) stmt.accept(this);
+        stmt.accept(this);
     }
 
     void executeBlock(List<Stmt> statements,
@@ -163,7 +167,6 @@ public class Interpreter implements Expr.Visitor<Object>,
 
             for (Stmt statement : statements) {
                 execute(statement);
-                if (broken) break;
             }
         } finally {
             this.environment = previous;
@@ -184,7 +187,8 @@ public class Interpreter implements Expr.Visitor<Object>,
 
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
-        LoxFunction function = new LoxFunction(stmt);
+        LoxFunction function = new LoxFunction(stmt, environment);
+        //System.out.println("Defining " + stmt.name.lexeme);
         environment.define(stmt.name.lexeme, function);
         return null;
     }
@@ -211,9 +215,9 @@ public class Interpreter implements Expr.Visitor<Object>,
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {
         Object value = null;
-        if (stmt != null) value = evalutate(stmt.value);
+        if (stmt != null) value = evaluate(stmt.value);
 
-        throw new Retrun(value);
+        throw new Return(value);
     }
 
     @Override
@@ -229,17 +233,19 @@ public class Interpreter implements Expr.Visitor<Object>,
 
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
-        while(isTruthy(evaluate(stmt.condition)) && !broken) {
-            execute(stmt.body);
+        while(isTruthy(evaluate(stmt.condition))) {
+            try {
+                execute(stmt.body);
+            } catch (Break _) {
+                break;
+            }
         }
-        broken = false;
         return null;
     }
     
     @Override
     public Void visitBreakStmt(Stmt.Break stmt) {
-        broken = true;
-        return null;
+        throw new Break();
     }
 
     @Override
@@ -307,8 +313,10 @@ public class Interpreter implements Expr.Visitor<Object>,
         Object callee = evaluate(expr.callee);
         
         List<Object> arguments = new ArrayList<>();
+        //System.out.println(expr.arguments.size());
         for (Expr argument : expr.arguments) {
             arguments.add(evaluate(argument));
+            //System.out.println("Adding arguments!");
         }
         /*
         if (!(callee instanceof LoxCallable)) {
@@ -324,7 +332,6 @@ public class Interpreter implements Expr.Visitor<Object>,
         }
         return function.call(this, arguments);
         */
-
         if (callee instanceof LoxCallable function) {
             if (arguments.size() != function.arity()) {
                 throw new RuntimeError(expr.paren, "Expected " +

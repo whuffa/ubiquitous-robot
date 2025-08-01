@@ -8,6 +8,7 @@ abstract class Expr { interface Visitor<R> {
     R visitCallExpr(Call expr);
     R visitGroupingExpr(Grouping expr);
     R visitLiteralExpr(Literal expr);
+    R visitFunctionExpr(Function expr);
     R visitLogicalExpr(Logical expr);
     R visitVariableExpr(Variable expr);
     R visitUnaryExpr(Unary expr);
@@ -81,6 +82,22 @@ abstract class Expr { interface Visitor<R> {
     }
 
     final Object value;
+    }
+ static class Function extends Expr {
+    Function(Token name, List<Token> params, List<Stmt> body) {
+    this.name = name;
+    this.params = params;
+    this.body = body;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+    return visitor.visitFunctionExpr(this);
+    }
+
+    final Token name;
+    final List<Token> params;
+    final List<Stmt> body;
     }
  static class Logical extends Expr {
     Logical(Expr left, Token operator, Expr right) {

@@ -68,10 +68,9 @@ abstract class Stmt { interface Visitor<R> {
     final Expr initializer;
     }
  static class Function extends Stmt {
-    Function(Token name, List<Token> params, List<Stmt> body) {
+    Function(Token name, Expr lambda) {
     this.name = name;
-    this.params = params;
-    this.body = body;
+    this.lambda = lambda;
     }
 
     @Override
@@ -80,8 +79,7 @@ abstract class Stmt { interface Visitor<R> {
     }
 
     final Token name;
-    final List<Token> params;
-    final List<Stmt> body;
+    final Expr lambda;
     }
  static class Print extends Stmt {
     Print(Expr expression) {
