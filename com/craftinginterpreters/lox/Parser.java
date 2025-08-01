@@ -217,7 +217,7 @@ public class Parser {
     private Expr anonFunction() {
         String kind = "function";
         Token start = previous();
-        System.out.println(start.lexeme);
+        //System.out.println(start.lexeme);
         consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
         List<Token> parameters = new ArrayList<>();
         if(!check(RIGHT_PAREN)) {

@@ -51,6 +51,11 @@ public class Lox {
 
         if(hadError) return;
 
+        Resolver resolver = new Resolver(interpreter);
+        resolver.resolve(statements);
+
+        if (hadError) return;
+
         interpreter.replInterpret(statements);
     }
 
@@ -61,6 +66,11 @@ public class Lox {
         List<Stmt> statements = parser.parse();
 
         // stop if there was error
+        if (hadError) return;
+
+        Resolver resolver = new Resolver(interpreter);
+        resolver.resolve(statements);
+
         if (hadError) return;
 
         interpreter.interpret(statements);
