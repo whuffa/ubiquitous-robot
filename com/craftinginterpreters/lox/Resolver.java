@@ -18,7 +18,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         NONE,
         FUNCTION,
         INITIALIZER,
-        METHOD
+        METHOD,
+        STATIC
     }
 
     private enum ClassType {
@@ -53,6 +54,10 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
                 declaration = FunctionType.INITIALIZER;
             }
             resolveFunction((Expr.Function)method.lambda, declaration);
+        }
+
+        for (Stmt.Function method : stmt.statics) {
+            resolveFunction((Expr.Function)method.lambda, FunctionType.STATIC);
         }
 
         endScope();
@@ -241,6 +246,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     private void resolveFunction(Expr.Function function, FunctionType type) {
+        //System.out.println(function.name.lexeme);
+        //System.out.println(type);
         FunctionType enclosingFunction = currentFunction;
         currentFunction = type;
         beginScope();

@@ -61,12 +61,22 @@ public class Parser {
         consume(LEFT_BRACE, "Expect '{' before class body.");
 
         List<Stmt.Function> methods = new ArrayList<>();
+        List<Stmt.Function> statics = new ArrayList<>();
         while (!check(RIGHT_BRACE) && !isAtEnd()){
+            if (match(CLASS)) {
+                Stmt.Function func = function("static method");
+                //System.out.println(func.name.lexeme);
+                statics.add(func);
+            }
             methods.add(function("method"));
         }
         consume(RIGHT_BRACE, "Expect '}' after class body.");
 
-        return new Stmt.Class(name, methods);
+        /*for (Stmt.Function func : statics) {
+            System.out.println(func.name.lexeme);
+        }*/
+
+        return new Stmt.Class(name, methods, statics);
     }
 
     private Stmt statement() {

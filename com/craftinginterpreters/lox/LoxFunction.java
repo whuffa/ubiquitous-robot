@@ -18,7 +18,7 @@ public class LoxFunction implements LoxCallable {
         boolean isInitializer) {
         this.closure = closure;
         this.declaration = new Stmt.Function(lambda.name, lambda);
-        this.func = (Expr.Function)lambda;
+        this.func = lambda;
         this.isInitializer = isInitializer;
     }
 
